@@ -48,6 +48,41 @@ export function createGatewaySysProps(
   ]);
 }
 
+// export function createSideEffect(
+//   api: ApiPromise,
+//   target: number[],
+//   keyring: any,
+// ) {
+//   // return api.createType('SideEffect', [
+//   //   // api.createType('TargetId', target),
+//   //   target,
+//   //   0,
+//   //   0,
+//   //   // api.createType('Bytes', new Bytes(api.registry, [116, 114, 97, 110])),
+//   //   [116, 114, 97, 110],
+//   //   // api.createType('Vec<Bytes>', [
+//   //   //   // new Bytes(api.registry, keyring.alice.address), 
+//   //   //   // new Bytes(api.registry, keyring.charlie.address), 
+//   //   //   // new Bytes(api.registry, [1, 0, 0, 0, 0, 0, 0, 0]),
+      
+//   //   // ]),
+//   //   [keyring.alice.address, keyring.charlie.address, [1, 0, 0, 0, 0, 0, 0, 0]],
+//   //   // api.createType('Bytes', new Bytes(api.registry, [])),
+//   //   [],
+//   //   // api.createType('Option<AccountId>', false)
+//   //   false
+//   // ]);
+//   return {
+//     target: target, // [97, 98, 99, 100] -> registered for testing, "abcd" in bytes
+//     prize: 0,
+//     ordered_at: 0,
+//     encoded_action: [116, 114, 97, 110], //tran
+//     encoded_args: [keyring.alice.address, keyring.charlie.address, [1, 0, 0, 0, 0, 0, 0, 0]],
+//     signature: [],
+//     enforce_executioner: false,
+//   }
+// }
+
 export function randomGatewayId() {
   return String.fromCharCode(...[0, 0, 0, 0].map(() => Math.floor(97 + Math.random() * 26)));
 }
