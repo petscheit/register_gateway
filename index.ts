@@ -13,7 +13,8 @@ class TransferSiseEffect {
             types: types as any,
         })
 
-        const target = [0, 0, 0, 0].map(() => Math.floor(97 + Math.random() * 26));
+        const target = [97, 98, 99, 100]
+        // .map(() => Math.floor(97 + Math.random() * 26));
         console.log("Initialized API")
         await register(this.api, target)
         console.log("Registered Roccoco")
