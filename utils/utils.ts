@@ -11,6 +11,7 @@ export function createGatewayABIConfig(
   crypto: 'Ed25519' | 'Sr25519' | 'Ecdsa',
   hasher: 'Blake2' | 'Keccak256'
 ): any {
+  console.log("here")
   return api.createType('GatewayABIConfig', [
     api.createType('u16', block_number_type_size),
     api.createType('u16', hash_size),
@@ -64,7 +65,7 @@ export function createGatewaySysProps(
 //   //   //   // new Bytes(api.registry, keyring.alice.address), 
 //   //   //   // new Bytes(api.registry, keyring.charlie.address), 
 //   //   //   // new Bytes(api.registry, [1, 0, 0, 0, 0, 0, 0, 0]),
-      
+
 //   //   // ]),
 //   //   [keyring.alice.address, keyring.charlie.address, [1, 0, 0, 0, 0, 0, 0, 0]],
 //   //   // api.createType('Bytes', new Bytes(api.registry, [])),
