@@ -37,7 +37,7 @@ fn main() {
         .map_err(|_| "Decoding Error!");
 
     match decoded {
-        Ok(_) => println!("{:?}", decoded.unwrap()),
+        Ok(_) => println!("{:?}", decoded.unwrap().1),
         Err(_) => println!("Decoding Error")
     }
 
