@@ -1,11 +1,15 @@
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import { JustificationNotification } from '@polkadot/types/interfaces/';
+import types from "./types.json"
 
-export const submitProof = async (circuit: ApiPromise, justification: JustificationNotification, headers: any[], gatewayId: any[]) => {
-
-    let tx = await circuit.tx.multiFinalityVerifierPolkadotLike.submitFinalityProof(
-        headers[headers.length - 1],
-        justification.toHuman(),
+export const submitProof = async (justification: any, header: any, gatewayId: any[]) => {
+    let circuit = await ApiPromise.create({
+        provider: new WsProvider("ws://127.0.0.1:9944"),
+        types: types as any
+    })
+    let tx = await circuit.tx.multiFinalityVerifierDefault.submitFinalityProof(
+        header,
+        justification,
         gatewayId
     )
 

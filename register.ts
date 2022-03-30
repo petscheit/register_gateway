@@ -6,15 +6,15 @@ export const register = async (circuitApi: ApiPromise, target: any[]) => {
     const rococoProvider = new WsProvider(rococoUrl);
     const rococoApi = await ApiPromise.create({ provider: rococoProvider });
     
-    const [rococoCurrentHeader, rococoMetadata, rococoGenesisHash] = await Promise.all([
-      await rococoApi.rpc.chain.getHeader(),
+    const [rococoMetadata, rococoGenesisHash] = await Promise.all([
       await rococoApi.runtimeMetadata,
       await rococoApi.genesisHash,
     ]);
-    
-    const rococoAtGenesis = await rococoApi.at(rococoGenesisHash);
-    const rococoInitialAuthorityList = await rococoAtGenesis.query.session.validators();
+    const rococoAuthorityList = await rococoApi.query.session.validators();
+    const authoritySetId = await rococoApi.query.grandpa.currentSetId()
+    const rococoRegistrationHeader = await rococoApi.rpc.chain.getHeader()
     await rococoApi.disconnect();
+    console.log(rococoAuthorityList.toHuman())
     
     
     const registerGateway = circuitApi.tx.circuitPortal.registerGateway(
@@ -28,9 +28,10 @@ export const register = async (circuitApi: ApiPromise, target: any[]) => {
       createGatewayGenesisConfig(rococoMetadata, rococoGenesisHash, circuitApi),
       createGatewaySysProps(circuitApi, 60, '', 0), // GatewaySysProps
       //Initial rococo, acts as gateway activation point
-      circuitApi.createType('Bytes', rococoCurrentHeader.toHex()),
+      circuitApi.createType('Bytes', rococoRegistrationHeader.toHex()),
       //List of current rococo authorities
-      circuitApi.createType('Option<Vec<AccountId>>', rococoInitialAuthorityList),
+      circuitApi.createType('Option<Vec<AccountId>>', rococoAuthorityList),
+      circuitApi.createType('Option<SetId>', authoritySetId),
       //SideEffects that are allowed on gateway instance
       circuitApi.createType('Vec<AllowedSideEffect>', ['tran']) // allowed side effects
     );
@@ -39,3 +40,26 @@ export const register = async (circuitApi: ApiPromise, target: any[]) => {
     const alice = keyring.addFromUri('//Alice');
     return circuitApi.tx.sudo.sudo(registerGateway).signAndSend(alice);
 };
+
+export const setOperational = async (circuit: ApiPromise, target: any[]) => {
+  const setOperational =
+    circuit.tx.multiFinalityVerifierPolkadotLike.setOperational(
+      true,
+      target
+    )
+  const keyring = new Keyring({ type: 'sr25519', ss58Format: 60 });
+  const alice = keyring.addFromUri('//Alice');
+
+  return new Promise(async (resolve, reject) => {
+    await circuit.tx.sudo
+      .sudo(setOperational)
+      .signAndSend(alice, result => {
+        if (result.isError) {
+          reject('submitting setOperational failed')
+        } else if (result.isInBlock) {
+          console.log(`gateway ${target.toString()} operational`)
+          resolve(undefined)
+        }
+      })
+  })
+}
