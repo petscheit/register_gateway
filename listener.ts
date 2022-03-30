@@ -4,38 +4,41 @@ import { submitProof } from "./relayer"
 require('dotenv').config();
 
 export class SubstrateListener {
-    wsProvider: WsProvider
     rangeSize: number;
     gatewayId: any[];
     headers: any[] = [];
     headerListener: any;
     anchorJustification: JustificationNotification;
-    apiPromise: ApiPromise;
+    circuit: ApiPromise;
+    rococo: ApiPromise;
 
-    constructor(gatewayId: any[]) {
-        this.wsProvider = new WsProvider(process.env.TARGET_RPC);
+    constructor(circuit: ApiPromise, rococo: ApiPromise, gatewayId: any[]) {
         this.rangeSize = Number(process.env.RANGE_SIZE);
         this.gatewayId = gatewayId;
+        this.circuit = circuit;
+        this.rococo = rococo;
     }
 
     async initListener() {
-        this.apiPromise = await ApiPromise.create({ provider: this.wsProvider });
-        this.headerListener = await this.apiPromise.rpc.chain.subscribeNewHeads(async (header) => {
+        let listener = await ApiPromise.create({
+            provider: new WsProvider("wss://rococo-rpc.polkadot.io"),
+        })
+        // this.circuit = a
+        this.headerListener = await listener.rpc.chain.subscribeNewHeads(async (header) => {
             console.log("Header:", header.number.toNumber());
             this.headers.push(header)
 
             if (this.headers.length === this.rangeSize) {
                 console.log("range size reached! continuing listen until matchig justification is found")
-                this.fetchIncomingGrandpaJustification();
+                this.fetchIncomingGrandpaJustification(listener);
             }
         });
     }
 
-    async fetchIncomingGrandpaJustification() {
+    async fetchIncomingGrandpaJustification(api: ApiPromise) {
         console.log("Started Grandpa Justification Listener...")
-        let listener = await this.apiPromise.rpc.grandpa.subscribeJustifications((justification: JustificationNotification) => {
+        let listener = await api.rpc.grandpa.subscribeJustifications((justification: JustificationNotification) => {
             console.log("Caught Justification!")
-            console.log(justification)
             // this.anchorJustification = justification;
 
             this.conclude(justification)
@@ -47,7 +50,7 @@ export class SubstrateListener {
         this.headerListener() // terminate header listener
         console.log("Headers found:", this.headers.length);
 
-        submitProof(justification, this.headers, this.gatewayId);
+        submitProof(this.circuit, justification, this.headers, this.gatewayId);
     }
 
 }

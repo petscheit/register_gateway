@@ -1,10 +1,7 @@
 import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
 import { JustificationNotification } from '@polkadot/types/interfaces/';
 
-export const submitProof = async (justification: JustificationNotification, headers: any[], gatewayId: any[]) => {
-    const circuit = await ApiPromise.create({
-        provider: new WsProvider("ws://127.0.0.1:9944")
-    });
+export const submitProof = async (circuit: ApiPromise, justification: JustificationNotification, headers: any[], gatewayId: any[]) => {
 
     let tx = await circuit.tx.multiFinalityVerifierPolkadotLike.submitFinalityProof(
         headers[headers.length - 1],

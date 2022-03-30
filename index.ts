@@ -2,32 +2,35 @@
 
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { register } from "./register";
+import types from "./types.json"
 // import { submitTransfer } from "./submit";
-// import { SubstrateListener } from './listener';
+import { SubstrateListener } from './listener';
 
 
 class TransferSiseEffect {
-    // listener: SubstrateListener
+    listener: SubstrateListener
     rococo: ApiPromise;
     circuit: ApiPromise;
     target: number[];
 
     async setup() {
+        this.target = [97, 98, 99, 100]
+        this.listener = new SubstrateListener(this.circuit, this.rococo, this.target)
+
         this.rococo = await ApiPromise.create({ 
             provider: new WsProvider("wss://rococo-rpc.polkadot.io"),
         })
         this.circuit = await ApiPromise.create({
             provider: new WsProvider("ws://127.0.0.1:9944"),
+            types: types as any
         })
-
-        this.target = [97, 98, 99, 100]
-        // this.listener = new SubstrateListener(this.target)
     }
 
     async run() {
         // .map(() => Math.floor(97 + Math.random() * 26));
+        await this.setup();
         console.log("Initialized API")
-        await register(this.circuit, this.rococo, this.target)
+        await register(this.circuit, this.target)
         console.log("Registered Roccoco")
         // await this.delay()
         // await this.listener.initListener()
@@ -71,7 +74,6 @@ class TransferSiseEffect {
 
 (async () => {
     let trans = new TransferSiseEffect();
-    await trans.setup();
     trans.run()
 })()
 
