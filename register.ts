@@ -1,41 +1,38 @@
-import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
+import { ApiPromise, Keyring } from '@polkadot/api';
 import { createGatewayABIConfig, createGatewayGenesisConfig, createGatewaySysProps } from './utils/utils';
 
-export const register = async (circuitApi: ApiPromise, target: any[]) => {
-  const rococoUrl = 'wss://rococo-rpc.polkadot.io'; // ws endpoint of target chain
-  const rococoProvider = new WsProvider(rococoUrl);
-  const rococoApi = await ApiPromise.create({ provider: rococoProvider });
-
+export const register = async (circuit: ApiPromise, rococo: ApiPromise, target: any[]) => {
+  const rococoUrl = 'wss://rococo-rpc.polkadot.io';
   const [rococoCurrentHeader, rococoMetadata, rococoGenesisHash] = await Promise.all([
-    await rococoApi.rpc.chain.getHeader(),
-    await rococoApi.runtimeMetadata,
-    await rococoApi.genesisHash,
+    await rococo.rpc.chain.getHeader(),
+    await rococo.runtimeMetadata,
+    await rococo.genesisHash,
   ]);
 
-  const rococoAtGenesis = await rococoApi.at(rococoGenesisHash);
+  const rococoAtGenesis = await rococo.at(rococoGenesisHash);
   const rococoInitialAuthorityList = await rococoAtGenesis.query.session.validators();
-  await rococoApi.disconnect();
+  await rococo.disconnect();
 
 
-  const registerGateway = circuitApi.tx.circuitPortal.registerGateway(
+  const registerGateway = circuit.tx.circuitPortal.registerGateway(
     rococoUrl,
     String.fromCharCode(...target),
-    createGatewayABIConfig(circuitApi, 32, 32, 32, 12, 'Sr25519', 'Blake2'),
+    createGatewayABIConfig(circuit, 32, 32, 32, 12, 'Sr25519', 'Blake2'),
     //GatewayVendor: 'Substrate' as rococo is substrate-based
-    circuitApi.createType('GatewayVendor', 'Substrate'),
+    circuit.createType('GatewayVendor', 'Substrate'),
     //GatewayType: we connect as a ProgrammableExternal
-    circuitApi.createType('GatewayType', { ProgrammableExternal: 1 }),
-    createGatewayGenesisConfig(rococoMetadata, rococoGenesisHash, circuitApi),
-    createGatewaySysProps(circuitApi, 60, '', 0), // GatewaySysProps
+    circuit.createType('GatewayType', { ProgrammableExternal: 1 }),
+    createGatewayGenesisConfig(rococoMetadata, rococoGenesisHash, circuit),
+    createGatewaySysProps(circuit, 60, '', 0), // GatewaySysProps
     //Initial rococo, acts as gateway activation point
-    circuitApi.createType('Bytes', rococoCurrentHeader.toHex()),
+    circuit.createType('Bytes', rococoCurrentHeader.toHex()),
     //List of current rococo authorities
-    circuitApi.createType('Option<Vec<AccountId>>', rococoInitialAuthorityList),
+    circuit.createType('Option<Vec<AccountId>>', rococoInitialAuthorityList),
     //SideEffects that are allowed on gateway instance
-    circuitApi.createType('Vec<AllowedSideEffect>', ['tran']) // allowed side effects
+    circuit.createType('Vec<AllowedSideEffect>', ['tran']) // allowed side effects
   );
 
   const keyring = new Keyring({ type: 'sr25519', ss58Format: 60 });
   const alice = keyring.addFromUri('//Alice');
-  return circuitApi.tx.sudo.sudo(registerGateway).signAndSend(alice);
+  return circuit.tx.sudo.sudo(registerGateway).signAndSend(alice);
 };
