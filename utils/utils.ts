@@ -1,6 +1,7 @@
 import { Bytes, Metadata } from '@polkadot/types';
 import { ApiPromise } from '@polkadot/api';
-import { Hash, RuntimeVersion } from '@polkadot/types/interfaces';
+import { Hash } from '@polkadot/types/interfaces';
+import { T3rnPrimitivesAbiGatewayABIConfig, T3rnPrimitivesGatewaySysProps } from '@polkadot/types/lookup';
 
 export function createGatewayABIConfig(
   api: ApiPromise,
@@ -10,7 +11,7 @@ export function createGatewayABIConfig(
   decimals: number,
   crypto: 'Ed25519' | 'Sr25519' | 'Ecdsa',
   hasher: 'Blake2' | 'Keccak256'
-): any {
+): T3rnPrimitivesAbiGatewayABIConfig {
   return api.createType('GatewayABIConfig', [
     api.createType('u16', block_number_type_size),
     api.createType('u16', hash_size),
@@ -28,8 +29,8 @@ export function createGatewayGenesisConfig(
   genesisHash: Hash,
   circuitApi: ApiPromise
 ): any {
-  return circuitApi.createType('GatewayGenesisConfig', [
-    circuitApi.createType('Option<Bytes>', metadata.asV14.pallets.toHex()),
+  return circuitApi.createType('T3rnPrimitivesGatewayGenesisConfig', [
+    metadata.asV14.pallets,
     metadata.asV14.extrinsic.version,
     genesisHash,
   ]);
@@ -40,8 +41,8 @@ export function createGatewaySysProps(
   ss58Format: number,
   tokenSymbol: string,
   tokenDecimals: number
-): any {
-  return api.createType('GatewaySysProps', [
+): T3rnPrimitivesGatewaySysProps {
+  return api.createType('T3rnPrimitivesGatewaySysProps', [
     api.createType('u16', ss58Format),
     api.createType('Bytes', new Bytes(api.registry, tokenSymbol)),
     api.createType('u8', tokenDecimals),
