@@ -1,5 +1,6 @@
+import '@t3rn/types';
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
-import types from "./types.json";
+
 import { register } from "./register";
 import { submitTransfer } from "./submit";
 
@@ -10,7 +11,6 @@ class TransferSiseEffect {
     async run() {
         this.api = await ApiPromise.create({ 
             provider: new WsProvider("ws://127.0.0.1:9944"),
-            types: types as any,
         })
 
         const target = [97, 98, 99, 100]

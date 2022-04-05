@@ -1,5 +1,7 @@
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api';
 import { createGatewayABIConfig, createGatewayGenesisConfig, createGatewaySysProps } from './utils/utils';
+import '@t3rn/types';
+import {T3rnPrimitivesAbiGatewayABIConfig} from "@polkadot/types/lookup";
 
 export const register = async (circuitApi: ApiPromise, target: any[]) => {
     const rococoUrl = 'wss://rococo-rpc.polkadot.io'; // ws endpoint of target chain
@@ -16,23 +18,31 @@ export const register = async (circuitApi: ApiPromise, target: any[]) => {
     const rococoInitialAuthorityList = await rococoAtGenesis.query.session.validators();
     await rococoApi.disconnect();
     
-    
+
     const registerGateway = circuitApi.tx.circuitPortal.registerGateway(
       rococoUrl,
       String.fromCharCode(...target),
-      createGatewayABIConfig(circuitApi, 32, 32, 32, 12, 'Sr25519', 'Blake2'),
+      {
+          hashSize: 32,
+          addressLength: 32,
+          blockNumberTypeSize: 32,
+          decimals: 12,
+          crypto: 'Sr25519',
+          hasher: "Blake2",
+          structs: []
+      },
       //GatewayVendor: 'Substrate' as rococo is substrate-based
-      circuitApi.createType('GatewayVendor', 'Substrate'),
+      'Substrate',
       //GatewayType: we connect as a ProgrammableExternal
-      circuitApi.createType('GatewayType', { ProgrammableExternal: 1 }),
+      "ProgrammableExternal",
       createGatewayGenesisConfig(rococoMetadata, rococoGenesisHash, circuitApi),
       createGatewaySysProps(circuitApi, 60, '', 0), // GatewaySysProps
       //Initial rococo, acts as gateway activation point
-      circuitApi.createType('Bytes', rococoCurrentHeader.toHex()),
+      rococoCurrentHeader.toHex(),
       //List of current rococo authorities
-      circuitApi.createType('Option<Vec<AccountId>>', rococoInitialAuthorityList),
+      rococoInitialAuthorityList,
       //SideEffects that are allowed on gateway instance
-      circuitApi.createType('Vec<AllowedSideEffect>', ['tran']) // allowed side effects
+      circuitApi.createType('Vec<[u8;4]>', ['tran']) // allowed side effects
     );
     
     const keyring = new Keyring({ type: 'sr25519', ss58Format: 60 });
